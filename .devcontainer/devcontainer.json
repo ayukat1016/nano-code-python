@@ -1,0 +1,7 @@
+{
+    "name": "nano-code-python-devcontainer",
+    "build": { "dockerfile": "Dockerfile" },
+    "remoteUser": "vscode",
+    "containerUser": "vscode",
+    "postCreateCommand": "bash -lc 'curl -fsSL https://claude.ai/install.sh | bash' && pip install --user -e \".[dev]\""
+}

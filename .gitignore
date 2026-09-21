@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+workspace/*
+!workspace/AGENTS.md
+!workspace/.git-keep
+*.egg-info/
