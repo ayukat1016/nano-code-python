@@ -54,6 +54,21 @@ GitHub Actions 上で、指定した PR の差分をレビューしてコメン�
 PULL_REQUEST_NUMBER=123 python bin/review.py
 ```
 
+## GitHub Actions 連携
+
+`.github/workflows/` に以下の2つのワークフローがあります（[`nano-code`](https://github.com/laiso/nano-code) の同名ワークフローを Python 向けに移植したものです）。
+
+- `nano-code-review.yml`: PR が作成・更新されるたびに `bin/review.py --yolo` を実行し、差分をレビューしてコメントを投稿します。`secure-agent` という Environment を指定しており、人間の承認（Approve）を経てから実行されます。
+- `nano-code.yml`: `workflow_dispatch`（手動実行、タスク内容を入力可能）または Issue 作成時に `bin/cli.py --yolo` を実行し、コード修正・コミット・PR作成・Issueへのコメントまで自動で行います。
+
+利用するには、リポジトリに以下を設定してください。
+
+- Secrets: `LLM_API_KEY`
+- Variables: `LLM_PROVIDER`, `LLM_MODEL`
+- Environment: `secure-agent`（`nano-code-review.yml` 用。レビュアーによる承認を必須にする場合は Settings > Environments で保護ルールを設定）
+
+`GITHUB_TOKEN` は GitHub Actions が自動生成するものをそのまま使用します。
+
 ## テスト
 
 ```bash
@@ -64,6 +79,10 @@ pytest -q
 
 ```
 .
+├── .github/
+│   └── workflows/
+│       ├── nano-code.yml         # Issue駆動 / 手動実行のコーディングエージェント
+│       └── nano-code-review.yml  # PRレビューエージェント
 ├── bin/
 │   ├── cli.py       # エージェント CLI エントリポイント
 │   └── review.py    # PR レビューエージェント（GitHub Actions 用）
