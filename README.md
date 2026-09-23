@@ -69,6 +69,49 @@ PULL_REQUEST_NUMBER=123 python bin/review.py
 
 `GITHUB_TOKEN` は GitHub Actions が自動生成するものをそのまま使用します。
 
+### 動作確認手順
+
+事前に、リポジトリの Settings > Actions > General > Workflow permissions で
+「Allow GitHub Actions to create and approve pull requests」を有効にしてください。
+これが無効だと `createPullRequest` ツールの `gh pr create` が権限エラーで失敗します。
+
+**`nano-code.yml`（Issue駆動エージェント）を試す**
+
+Issue を作成すると自動でトリガーされます。
+
+```bash
+gh issue create \
+  --repo <owner>/<repo> \
+  --title "calculator.pyにテストを追加" \
+  --body "calculator.py の関数にユニットテストを追加してください。"
+```
+
+正常に動作すると、エージェントが `workspace/calculator.py` と `workspace/test_calculator.py` を作成し、
+ブランチ作成 → コミット → プッシュ → プルリクエスト作成 → 元のIssueへのコメント、まで自動で行います。
+
+このとき作られるプルリクエストは `GITHUB_TOKEN` を使って `github-actions[bot]` が作成したものになるため、
+`author_association` が `NONE` になります。後述の `nano-code-review.yml` は
+「PR作成者が OWNER/MEMBER/COLLABORATOR の場合のみ動作する」という条件になっているため、
+このPRに対しては**意図的にスキップ**されます（信頼できない入力からエージェントが自動でコード変更・自動レビュー・自動承認までを連鎖させてしまわないようにするためのセキュリティ上のガードです）。
+
+**`nano-code-review.yml`（PRレビューエージェント）を試す**
+
+`nano-code-review.yml` の動作を確認するには、自分のアカウントで直接プルリクエストを作成する必要があります。
+
+```bash
+git checkout -b <branch-name>
+# 何かファイルを変更してコミット
+git add <file>
+git commit -m "..."
+git push -u origin <branch-name>
+gh pr create --repo <owner>/<repo> --title "..." --body "..."
+```
+
+PRを作成すると `nano-code-review.yml` がトリガーされますが、`secure-agent` Environment に
+レビュアーを設定している場合はジョブが `waiting`（承認待ち）状態になります。
+GitHub の Actions 画面から対象の実行を開き、Review deployments > Approve で承認すると
+`bin/review.py --yolo` が実行され、レビューコメントがPRに投稿されます。
+
 ## テスト
 
 ```bash
